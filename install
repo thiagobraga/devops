@@ -4,7 +4,7 @@
 # ===================================================
 
 # Pasta padrão do framework
-DEVOPS_PATH="~/projetos/thiago/devops-tools"
+DEVOPS_PATH="$HOME/projetos/thiago/devops-tools"
 
 # Importação das variáveis gerais
 #
@@ -26,9 +26,9 @@ source "$DEVOPS_PATH"/swap
 source "$DEVOPS_PATH"/security/password
 
 # Importação de instaladores
-source "$DEVOPS_PATH"/install/go
-source "$DEVOPS_PATH"/install/terraform
-source "$DEVOPS_PATH"/install/translate
+source "$DEVOPS_PATH"/packages/go
+source "$DEVOPS_PATH"/packages/terraform
+source "$DEVOPS_PATH"/packages/translate
 
 
 # Métodos globais do DevOps
@@ -39,7 +39,7 @@ source "$DEVOPS_PATH"/install/translate
 # Obtém a versão atual do framework DevOps
 # através das tags do Git. É usado no método
 # do core `devops version`.
-currentVersion=$(git --git-dir="${DEVOPS_PATH}/.git" describe --tags | cut -d"-" -f 1,2)
+# currentVersion=$(git --git-dir="${DEVOPS_PATH}/.git" describe --tags | cut -d"-" -f 1,2)
 
 
 # DevOps
