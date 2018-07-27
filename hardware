@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Hardware
+# =====================
+#
+# Aliases e métodos para interação com o hardware
+# ou para obter informações úteis.
+
+# Exibe as dimensões do monitor
+# ==========================================
+alias monitor-size='xrandr | grep " connected primary" | cut -d" " -f 4 | cut -d"+" -f1'
+
+# Obtém endereço IP
+# ==========================================
+#
+# Através do método hostname, obtemos o IP da máquina
+# atual, filtrando os IPs criados pelo Docker.
+alias ip-address='hostname -I | cut -d" " -f1'
+
+# Limpar memória
+# ==========================================
+#
+# Limpa os buffers e cache do sistema para
+# reduzir o consumo de memória.
+clear-memory () {
+  sudo sync; echo 'echo 1 > /proc/sys/vm/drop_caches' | sudo sh
+  sudo sync; echo 'echo 2 > /proc/sys/vm/drop_caches' | sudo sh
+  sudo sync; echo 'echo 3 > /proc/sys/vm/drop_caches' | sudo sh
+}
+
+# Glances
+# ==========================================
+#
+# Ótima ferramenta para monitorar recuros do sistema.
+# @see:  https://github.com/nicolargo/glances
+alias glances='docker run -v /var/run/docker.sock:/var/run/docker.sock:ro --pid host -it docker.io/nicolargo/glances'

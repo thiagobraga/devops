@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# TODO: Temporário para CPOS
+deploy() {
+  BRANCH=$1
+  git checkout $BRANCH
+  ssh cpos "git --git-dir=/var/www/api-cpos.git update-ref -d refs/heads/$BRANCH"
+  ssh cpos "sudo rm -rf /var/www/api-cpos/$BRANCH"
+  #ssh cpos "docker rm -f \$(docker ps -a | grep cposmaster_nginx | awk '{ print \$1 }')"
+  #ssh cpos "docker rm -f \$(docker ps -a | grep cpos_proxy | awk '{ print \$1 }')"
+  #ssh cpos "docker rmi \$(docker images | grep cpos_proxy | awk '{ print \$3 }')"
+  git push production $BRANCH
+}
+
+# TODO: Temporário para CPOS
+run_db:seed() {
+  BRANCH=$1
+  ssh cpos \
+    "cd /var/www/api-cpos/$BRANCH
+    docker-compose -p cpos${BRANCH} -f docker-compose.prod.yml exec \
+      --user=laradock -T workspace \
+      php artisan db:seed --force"
+  echo "[Deploy] Seeds executadas no branch $BRANCH na AWS."
+}
+
+# TODO: Temporário para CPOS
+run_composer() {
+  BRANCH=$1
+  ssh cpos \
+    "cd /var/www/api-cpos/$BRANCH
+    sudo rm -rf vendor
+    docker-compose -p cpos${BRANCH} -f production.yml exec \
+      --user=laradock -T workspace bash -c '\
+        composer install
+        composer dump-autoload'"
+  echo "[Deploy] Composer executado no branch $BRANCH na AWS."
+}

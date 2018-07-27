@@ -1,0 +1,28 @@
+#!/bin/bash
+
+install-terraform () {
+
+  # Primeiro checa se o sistema possui Terraform instalado.
+  if sudo su -c 'command -v terraform' > /dev/null 2>&1; then
+    echo "[DevOps] Terraform já instalado. [$CHECK_SYMBOL]"
+  else
+    echo "[DevOps] Terraform não encontrado. [$ERROR_SYMBOL]"
+    echo '[DevOps] Instalando Terraform...'
+    echo ''
+
+    # Verifica se o sistema é 64x ou 32xx
+    if [[ `arch` = "x86_64" ]]; then
+      wget -O $HOME/terraform.zip https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+    else
+      wget -O $HOME/terraform.zip https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_386.zip
+    fi
+
+    sudo unzip -o $HOME/terraform.zip -d /usr/bin
+    rm -rf $HOME/terraform.zip
+
+    echo ''
+    echo "[DevOps] Terraform instalado com sucesso. [$CHECK_SYMBOL]"
+  fi
+
+  terraform -v
+}

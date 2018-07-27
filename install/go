@@ -1,0 +1,26 @@
+#!/bin/bash
+
+install-go () {
+
+  # Primeiro checa se o sistema possui GoLang instalado.
+  if sudo su -c 'command -v go' > /dev/null 2>&1; then
+    echo "[DevOps] GoLang já instalado. [$CHECK_SYMBOL]"
+  else
+    echo "[DevOps] GoLang não encontrado. [$ERROR_SYMBOL]"
+    echo '[DevOps] Instalando GoLang...'
+    echo ''
+
+    wget https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz
+    tar -C "$HOME" -xzf go${GO_VERSION}.linux-amd64.tar.gz
+    rm go${GO_VERSION}.linux-amd64.tar.gz
+
+    export PATH=$PATH:$HOME/go/bin
+    export GOROOT=$HOME/go
+    export GOPATH=$GOROOT/bin
+
+    echo ''
+    echo "[DevOps] GoLang instalado com sucesso. [$CHECK_SYMBOL]"
+  fi
+
+  go version
+}

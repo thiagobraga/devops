@@ -1,0 +1,132 @@
+#!/bin/bash
+
+# DevOps Tools
+# ===================================================
+
+# Pasta padrão do framework
+DEVOPS_PATH="~/projetos/thiago/devops-tools"
+
+# Importação das variáveis gerais
+#
+# O .env é importado caso exista, contendo apenas variáveis
+# que precisam ser sobrescritas.
+source "$DEVOPS_PATH"/.env.example
+[ -e "$DEVOPS_PATH"/.env ] && source "$DEVOPS_PATH"/.env
+
+# Importação dos scripts do framework
+source "$DEVOPS_PATH"/helpers
+source "$DEVOPS_PATH"/docker
+source "$DEVOPS_PATH"/git
+source "$DEVOPS_PATH"/hardware
+source "$DEVOPS_PATH"/pivotal
+source "$DEVOPS_PATH"/software
+source "$DEVOPS_PATH"/swap
+
+# Importação dos scripts de segurança
+source "$DEVOPS_PATH"/security/password
+
+# Importação de instaladores
+source "$DEVOPS_PATH"/install/go
+source "$DEVOPS_PATH"/install/terraform
+source "$DEVOPS_PATH"/install/translate
+
+
+# Métodos globais do DevOps
+# ===================================================
+
+# Versão atual
+#
+# Obtém a versão atual do framework DevOps
+# através das tags do Git. É usado no método
+# do core `devops version`.
+currentVersion=$(git --git-dir="${DEVOPS_PATH}/.git" describe --tags | cut -d"-" -f 1,2)
+
+
+# DevOps
+#
+# O core do DevOps com ajuda, versão, instalação
+# e desinstalação.
+devops () (
+
+  # Version
+  # -------------------------------------------------
+  #
+  # Exibe a versão atual do DevOps baseado
+  # nas tags do Git e no commit atual.
+  version () {
+    echo "${COLOR_YELLOW}DevOps${COLOR_DEFAULT} $currentVersion"
+  }
+
+  # Help
+  # -------------------------------------------------
+  #
+  # Exibe os comandos disponíveis no DevOps.
+  help () {
+    version
+    echo "
+      DevOps é um projeto que concentra scripts e aliases
+      para desenvolvimento no Instituto Soma.
+
+      ${COLOR_BOLD_WHITE}uso:${COLOR_DEFAULT}
+        devops [command]
+        dv [command]
+
+      ${COLOR_BOLD_WHITE}comandos:${COLOR_DEFAULT}
+        h, help        Exibe este arquivo de ajuda.
+        i, install     Instala o DevOps para o usuário atual.
+        v, version     Imprime a versão do DevOps.
+
+      ${COLOR_BOLD_WHITE}exemplos:${COLOR_DEFAULT}
+        devops install
+        dv --help
+        dv -h
+        dv i" | cut -b "${#indent3x}-"
+  }
+
+  # Install
+  # -------------------------------------------------
+  #
+  # Instala o DevOps para o usuário utilizar globalmente.
+  # Script funcional para ZSH.
+  install () {
+    printf '[DevOps] Verificando se ZSH está instalado '
+
+    # Checa se existe um arquivo .zshrc para o usuário atual.
+    if [[ -f ~/.zshrc ]]; then
+      echo "[${CHECK_SYMBOL}]"
+      printf '[DevOps] Verificando se DevOps está instalado '
+
+      # Busca no arquivo ~/.zshrc a existência
+      # do comando source ativando o DevOps.
+      grep -rni ~/.zshrc -e '[ -e "$HOME/devops/devops" ] && source "$HOME/devops/devops"' > /dev/null 2>&1
+
+      # DevOps já foi instalado para o usuário atual.
+      if [[ $? == 0 ]]; then
+        echo "[${CHECK_SYMBOL}]"
+        echo "[DevOps] Já instalado! [${CHECK_SYMBOL}]"
+        echo '[DevOps] Caso não esteja habilitado, execute:'
+        echo ''
+        echo '    source ~/.zshrc'
+
+      # DevOps ainda não foi instalado para o usuário atual.
+      else
+        echo "[${ERROR_SYMBOL}]"
+        printf "[DevOps] Não instalado. Instalando DevOps para ZSH... "
+        echo '[ -e "$HOME/devops/devops" ] && source "$HOME/devops/devops"' >> ~/.zshrc
+        echo "[${CHECK_SYMBOL}]"
+      fi
+    fi
+  }
+
+  case $1 in
+    i|-i|install|--install) install;;
+    v|-v|version|--version) version;;
+    h|-h|help|--help)       help;;
+    *) help;;
+  esac
+)
+
+
+# Alias para a classe DevOps
+# ===================================================
+alias dv='devops'

@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# Software
+# ==========================================
+#
+# Aliases que modificam o funcionamento de alguns,
+# bem como cria atalhos para a execução de várias
+# tarefas sequenciais e repetitivas.
+
+# Instaladores sem sudo
+# ==========================================
+#
+# Para preguiçosos como eu.
+alias apt='sudo apt'
+alias apt-get='sudo apt-get'
+alias dpkg='sudo dpkg'
+
+# Melhorias no nano
+# ==========================================
+#
+# - Converte tabulações digitadas em espaços
+# - Dois espaços como indentação
+# - Mostrar a posição do cursor constantemente
+# - Retira bordas extras do nano para usar mais espaço na tela
+# - Rolar linhas suavemente ao invés de meia tela
+# - Não ajuste linhas compridas
+alias nano='nano --tabstospaces --tabsize=2 --const --morespace --smooth --nowrap'
+
+# Remote Desktop
+# ==========================================
+#
+# @TODO: Tentar utilizar $(monitor-size) para calcular o tamanho
+# da tela no parâmetro -g
+alias rdp='rdesktop -r clipboard:CLIPBOARD -N -g1440x860'
+
+# Atualizações
+alias clean='sudo apt-get autoremove -y && sudo apt-get clean'
+alias update='sudo apt-get update && sudo apt-get upgrade -y'
+
+alias update-gitlab="ssh $GITLAB_VMNAME 'apt-get update && apt-get install gitlab-ce -y -q && gitlab-ctl restart'"
+
+# VirtualBox
+# ==========================================
+#
+# Estes aliases requerem que o VirtualBox esteja instalado,
+# o serviço rodando e que o desenvolvedor possua VMs e Snapshots
+# dessas VMs com os nomes especificados no .env
+alias photoshop="vboxmanage snapshot '$VBOX_WINDOWS_VMNAME' restore '$VBOX_PHOTOSHOP_SNAPSHOT' && vboxmanage startvm '$VBOX_WINDOWS_VMNAME'"
+alias xen="vboxmanage snapshot '$VBOX_WINDOWS_VMNAME' restore '$VBOX_XENCENTER_SNAPSHOT' && vboxmanage startvm '$VBOX_WINDOWS_VMNAME'"

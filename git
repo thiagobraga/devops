@@ -1,0 +1,223 @@
+#!/bin/bash
+# shellcheck disable=2016,2154
+
+# Help
+# ==========================================
+ghelp() {
+  echo '-----------------------------------------------------------------------------------------------'
+  echo '                                         Git Aliases                                           '
+  echo '-----------------------------------------------------------------------------------------------'
+  echo ' gmff      git merge --no-ff --no-edit'
+  echo ' gsb       Alias que mostra seus branchs locais e a mensagem de commit atual de cada um'
+  echo ' gcof      git checkout feature/$1'
+  echo ' gcob      git checkout bugfix/$1'
+  echo ' gcoh      git checkout hotfix/$1'
+  echo ' gdlmb     Delete branches locais mergeados'
+}
+
+alias gh='ghelp'
+
+# Git
+# ==========================================
+alias gmff='git merge --no-ff --no-edit'
+
+# Alias que mostra seus branchs locais e a mensagem de commit atual de cada um
+# Sugestão do K2
+# @see  http://gitlab.institutosoma.org.br:8009/institutosoma/devops/merge_requests/12#note_5861
+alias gsb='git show-branch --list | sed -E '\''s,(^[^\[]+\[)(.+)(\]),\x1b[31m\1\x1b[33m\2\x1b[31m\3\x1b[0m\t,g'\'
+
+
+# Git checkout por tipo de ticket
+# ==========================================
+#
+# Verifica se existe o branch, alterando para
+# essa feature ou criando uma nova feature.
+
+checkParam () {
+  if [ "$1" == '' ]; then
+    echo "[DevOps] Você precisa especificar um nome de branch. ${ERROR_SYMBOL}"
+    echo "Sugestão: Você pode utilizar o ID do ticket do Pivotal Tracker. Ex:"
+    echo ''
+    echo '    feature/12345678'
+    return
+  fi
+}
+
+# Feature
+#
+# Usage:
+#   gcof 12345678
+#   gcof #12345678
+gcof () {
+  checkParam "$1"
+  if git branch -a | grep "feature/$1"; then
+    git checkout feature/"$1"
+  else
+    git checkout -b feature/"$1"
+  fi
+}
+
+# Bugfix
+#
+# Usage:
+#   gcob 12345678
+#   gcob #12345678
+gcob() {
+  checkParam "$1"
+  if git branch -a | grep "bugfix/$1"; then
+    git checkout bugfix/"$1"
+  else
+    git checkout -b bugfix/"$1"
+  fi
+}
+
+# Hotfix
+#
+# Usage:
+#   gcob 12345678
+#   gcob #12345678
+gcoh() {
+  checkParam "$1"
+  if git branch -a | grep "hotfix/$1"; then
+    git checkout hotfix/"$1"
+  else
+    git checkout -b hotfix/"$1"
+  fi
+}
+
+
+# Delete branches locais mergeados
+# ==========================================
+#
+# Este método busca branchs locais que existem
+# no remote, mas que foram excluídos.
+#
+# @TODO: Melhorar esse nome gigante.
+# @TODO: Pensar num alias para o mesmo.
+gdlmb() {
+  git fetch -p
+  for BRANCH in $(git branch -vv | grep ': gone]' | awk '{print $1}');
+    do git branch -D "$BRANCH"
+  done
+}
+
+
+# Bruxarias que obtém dados do Pivotal Tracker
+# ==========================================
+#
+# Criado por Heitor
+
+# Get Pivotal Tracker Project ID
+gptpid() {
+  name=$1
+  pid=""
+
+  if [[ "$name" == *"arteris"* ]]; then
+    pid="1904617"
+    echo $pid
+  elif [[ "$name" == *"cpos"* ]]; then
+    pid="2001135"
+    echo $pid
+  elif [[ "$name" == *"promocoes"* ]]; then
+    pid="2072005"
+    echo $pid
+  fi
+}
+
+# Get Pivotal Tracker Ticket Name
+gpttn() {
+  tid=$1
+  folder_name=$(echo "${PWD}")
+  pid=$(gptpid $folder_name)
+
+  result=$(curl -X GET -H "X-TrackerToken: $PIVOTALTRACKER_TOKEN" "https://www.pivotaltracker.com/services/v5/projects/$pid/stories/$tid")
+  echo $(php -r "\$json = @json_decode('$result', true); echo isset(\$json['name']) ? \$json['name'] : '';")
+}
+
+# During the Day Commit
+gddc() {
+  msg=$1
+  branch=$(git rev-parse --abbrev-ref HEAD)
+  branch_code=$(echo $branch | sed -E "s/(feature|bugfix|hotfix)\///g")
+
+  if [[ -z "$msg" ]]; then
+    commit_msg="#$branch_code: $(gpttn $branch_code)"
+    if [[ -z "$commig_msg" ]]; then
+      commit_msg=$(git log -1 $branch --no-merges | grep $branch_code)
+      commit_msg=$(echo $commit_msg | xargs)
+    fi
+  else
+    commit_msg="#$branch_code: $msg"
+  fi
+
+  if [[ -z "$commit_msg" ]]; then
+    echo "Commit message not found."
+  else
+    echo "Commiting with message: \"$commit_msg\"\n"
+
+    git add -A
+    git commit -m $commit_msg
+  fi
+}
+
+# End of the Day Commit
+gedc() {
+  msg=$1
+  branch=$(git rev-parse --abbrev-ref HEAD)
+  branch_code=$(echo $branch | sed -E "s/(feature|bugfix|hotfix)\///g")
+
+  if [[ -z "$msg" ]]; then
+    commit_msg="#$branch_code: $(gpttn $branch_code)"
+    if [[ -z "$commig_msg" ]]; then
+      commit_msg=$(git log -1 $branch --no-merges | grep $branch_code)
+      commit_msg=$(echo $commit_msg | xargs)
+    fi
+  else
+    commit_msg="#$branch_code: $msg"
+  fi
+
+  if [[ -z "$commit_msg" ]]; then
+    echo "Commit message not found."
+  else
+    echo "Commiting with message: \"$commit_msg\"\n"
+
+    git add -A
+    git commit -m $commit_msg
+
+    git push origin $branch
+  fi
+}
+
+# End of the Work Commit
+gewc() {
+  msg=$1
+  branch=$(git rev-parse --abbrev-ref HEAD)
+  branch_code=$(echo $branch | sed -E "s/(feature|bugfix|hotfix)\///g")
+
+  if [[ -z "$msg" ]]; then
+    commit_msg="#$branch_code: $(gpttn $branch_code)"
+    if [[ -z "$commig_msg" ]]; then
+      commit_msg=$(git log -1 $branch --no-merges | grep $branch_code)
+      commit_msg=$(echo $commit_msg | xargs)
+    fi
+  else
+    commit_msg="#$branch_code: $msg"
+  fi
+
+  if [[ -z "$commit_msg" ]]; then
+    echo "Commit message not found."
+  else
+    echo "Commiting with message: \"$commit_msg\"\n"
+
+    git add -A
+    git commit -m $commit_msg
+
+    git checkout develop
+    git pull origin develop
+
+    git checkout $branch
+    git merge --no-ff --no-edit develop
+
+    git push origin $branch
+  fi
+}

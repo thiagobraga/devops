@@ -1,0 +1,113 @@
+#!/usr/bin/sh
+# shellcheck disable=2016
+
+# Help
+# ==========================================
+dhelp() {
+  echo '-----------------------------------------------------------------------------------------------'
+  echo '                                         Docker Aliases                                        '
+  echo '-----------------------------------------------------------------------------------------------'
+  echo ' dh        dhelp'
+  echo ' dps       docker ps'
+  echo ' dpsq      docker ps -q'
+  echo ' dpsa      docker ps -a'
+  echo ' dpsqa     docker ps -q -a'
+  echo ' dstop     docker stop'
+  echo ' dstopa    docker stop $(docker ps -q -a)'
+  echo ' dr        docker run'
+  echo ' drm       docker rm'
+  echo ' drma      docker rm $(docker ps -q -a)'
+  echo ' di        docker images'
+  echo ' drmi      docker rmi $(docker images -q)'
+  echo ' dc        docker-compose'
+  echo ' dcup      docker-compose up'
+  echo ' dcupd     docker-compose up -d'
+  echo ' dcdown    docker-compose down'
+  echo ' dckill    docker-compose kill'
+  echo ' dcr       docker-compose kill && docker-compose up'
+  echo ' dcrd      docker-compose kill && docker-compose up -d'
+  echo ' dcexec    docker-compose exec'
+  echo ' dclogs    docker-compose logs'
+  echo ' dcbuild   docker-compose build'
+  echo ' d         docker-compose exec --user=laradock workspace'
+}
+
+# Docker
+# ==========================================
+alias dh='dhelp'
+alias dps='docker ps'
+alias dpsq='docker ps -q'
+alias dpsa='docker ps -a'
+alias dpsqa='docker ps -q -a'
+alias dpsaq='docker ps -a -q'
+alias dstop='docker stop'
+alias dstopr='docker stop $(docker ps -q)'
+alias dstopa='docker stop $(docker ps -q -a)'
+alias dr='docker run'
+alias drm='docker rm'
+alias drma='docker rm $(docker ps -q -a)'
+alias di='docker images'
+alias drmi='docker rmi $(docker images -q)'
+
+# Docker Compose
+# ==========================================
+alias dc='docker-compose'
+alias dcup='docker-compose up'
+alias dcupd='docker-compose up -d'
+alias dcdown='docker-compose down'
+alias dckill='docker-compose kill'
+alias dcr='docker-compose kill && docker-compose up'
+alias dcrd='docker-compose kill && docker-compose up -d'
+alias dcexec='docker-compose exec'
+alias dclogs='docker-compose logs'
+alias dcbuild='docker-compose build'
+
+# Laradock
+# ==========================================
+
+# Alias para executar comandos no container "workspace" do Laradock.
+# Facilita a execução de programas como bash, php, composer.
+#
+# Usage:
+#   d php artisan migrate:refresh --weed
+#   d composer install
+#   d bash
+alias d='docker-compose exec --user=laradock workspace'
+
+# Portainer
+# ==========================================
+# TODO: Ainda em desenvolvimento
+__portainer() {
+  PORTAINER_ID=$(docker ps -a | grep portainer | awk '{ print $1 }')
+
+  if [ "$PORTAINER_ID" != '' ]; then
+    echo '[DevOps] Inicializando Portainer na porta 9000...'
+    docker run \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      -v portainer_data:/data \
+      $PORTAINER_ID
+  else
+    echo '[DevOps] Portainer não encontrado. Instalando...'
+    docker run -d --name=portainer \
+      -p 9000:9000 \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      -v portainer_data:/data \
+      portainer/portainer
+  fi
+
+  echo '[DevOps] Portainer instalado com sucesso. Acesse http://localhost:9000'
+}
+
+# Atualiza o Portainer do Instituto Soma
+# Atualmente sendo executado na isvm23
+update-portainer () {
+  CONTAINER_NAME='portainer/portainer'
+
+  ssh isvm23 \
+    "docker rm -f \$(docker ps -a | grep $CONTAINER_NAME | awk '{ print \$1 }')
+    docker rmi -f \$(docker images | grep $CONTAINER_NAME | awk '{ print \$3 }')
+    docker run -d -p 9000:9000 \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      -v portainer_data:/data \
+      '$CONTAINER_NAME':latest"
+}

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+install-translate() {
+
+  # Primeiro checa se o sistema possui Translate instalado.
+  if sudo su -c 'command -v trans' > /dev/null 2>&1; then
+    echo "[DevOps] Translate-Shell já instalado. [$CHECK_SYMBOL]"
+  else
+    echo "[DevOps] Translate-Shell não encontrado. [$ERROR_SYMBOL]"
+    echo -e '[DevOps] Instalando Translate-Shell...\n'
+
+    git clone https://github.com/soimort/translate-shell ${HOME}/translate-shell
+    make -C ${HOME}/translate-shell
+    sudo make install -C ${HOME}/translate-shell
+
+    echo -e "\n[DevOps] Terraform instalado com sucesso. [$CHECK_SYMBOL]"
+  fi
+
+  rm -rf ${HOME}/translate-shell
+  trans -V
+}

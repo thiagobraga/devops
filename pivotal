@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Pivotal API wrapper
+# ===================================================
+#
+# Usage:
+#   pivotal projects
+#   pivotal projects/2001135/stories?with_state=accepted&accepted_before=1519873200000&accepted_after=1517450400000
+pivotal() {
+  ENDPOINT=$1
+  curl -sS -X GET -H "X-TrackerToken: ${PIVOTALTRACKER_TOKEN}" "https://www.pivotaltracker.com/services/v5/${ENDPOINT}"
+}
