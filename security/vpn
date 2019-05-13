@@ -1,0 +1,110 @@
+#!/bin/bash
+# shellcheck disable=SC2086
+
+vpn() (
+
+  RESOLVSTACK=(
+    # "search domain_search"
+    "nameserver 8.8.8.8"
+    "nameserver 8.8.4.4"
+  )
+
+  put_resolv_conf() {
+    # for (( i=${#RESOLVSTACK[@]}; i>0; i-- )); do echo $i ' => ' ${RESOLVSTACK[$i]}; done;
+    for (( i=${#RESOLVSTACK[@]}; i>0; i-- )); do
+      sudo sed -i "1s/^/${RESOLVSTACK[$i]}\n/" /etc/resolv.conf
+    done
+    echo "[DevOps] DNS adicionado ao arquivo /etc/resolv.conf [$CHECK_SYMBOL]"
+  }
+
+  pop_resolv_conf() {
+    for (( i=${#RESOLVSTACK[@]}; i>0; i-- )); do
+      # sudo sed -i -n "/${RESOLVSTACK[$i]}/ !p" /etc/resolv.conf
+      sudo sed \
+        --expression "0,/${RESOLVSTACK[$i]}/ s///"    `# tira a primeira ocorrência` \
+        --expression '/^$/ N; /^\n$/ D'               `# troca duas linhas vazias por uma` \
+        --in-place /etc/resolv.conf
+      sudo sed \
+        --expression '1{/^[[:space:]]*$/d}'           `# remove a primeira linha vazia` \
+        --in-place /etc/resolv.conf
+    done
+    echo "[DevOps] DNS removidos do arquivo /etc/resolv.conf [$CHECK_SYMBOL]"
+  }
+
+  install() {
+    # Primeiro checa se o sistema possui OpenVPN instalado.
+    if ! sudo su -c 'command -v openvpn' > /dev/null 2>&1; then
+      echo "[DevOps] OpenVPN não encontrado. [$ERROR_SYMBOL]"
+      echo "[DevOps] Instalando OpenVPN..."
+      sudo apt-get update -qq && sudo apt-get install openvpn -y
+      echo "[DevOps] OpenVPN instalado com sucesso. [$CHECK_SYMBOL]"
+    fi
+  }
+
+  default() {
+    # Em seguida, checa se existe o arquivo de configuração da VPN,
+    # e assim, já inicializa uma conexão VPN com o Soma, incluindo
+    # os endereços de DNS do Soma.
+
+    PID_VPN=$(ps -aux |grep 'root' | grep 'openvpn --' | awk '{ print $2 }')
+    if [[ ! $PID_VPN ]]; then
+    echo "[DevOps] Abrindo conexão VPN..."
+    trap "" SIGINT SIGTERM
+    put_resolv_conf
+    sudo openvpn --config "$VPN_CLIENT_PATH/$VPN_CLIENT_FILE" 2> /dev/null
+    pop_resolv_conf    
+    else
+      vpn status
+    fi
+  }
+
+  daemon() {
+    # Inicia a conexão da VPN em background
+    PID_VPN=$(ps -aux |grep 'root' | grep 'openvpn --' | awk '{ print $2 }')
+    if [[ ! $PID_VPN ]]; then
+      put_resolv_conf
+      sudo openvpn --config "$VPN_CLIENT_PATH/$VPN_CLIENT_FILE" --daemon
+    else
+      vpn status
+    fi
+  }
+
+  exit() {
+    # Mata o processo da VPN
+    PID_VPN=$(ps -aux |grep 'root' | grep 'openvpn --' | awk '{ print $2 }')
+    if [[ $PID_VPN ]]; then
+      echo "${COLOR_BOLD_RED}[DevOps] Encerrando conexão VPN...${COLOR_DEFAULT}" && sleep 1
+      sudo kill ${PID_VPN}
+      pop_resolv_conf
+    else
+      echo "${COLOR_BOLD_RED}[DevOps] VPN está Off!${COLOR_DEFAULT}"
+    fi
+  }
+
+  status() {
+    if [[ $(ifconfig |grep -A7 tun) ]]; then
+      IP_VPN=$(ifconfig |grep -A7 tun | grep "inet 192.168" | awk '{ print $2 }')
+      echo "${COLOR_BOLD_GREEN}[DevOps] VPN está On e seu IP é o: ${COLOR_BOLD_WHITE}${IP_VPN}${COLOR_DEFAULT}!"
+    else
+      echo "${COLOR_BOLD_RED}[DevOps] VPN está Off!${COLOR_DEFAULT}"
+    fi
+  }
+  help() {
+    echo -e "\tvpn\t\tExecuta conector da VPN"
+    echo -e "\tvpn daemon\tExecuta conector da VPN como daemon (Em Background)"
+    echo -e "\tvpn exit\tDesconecta VPN caso conectada"
+    echo -e "\tvpn install\tInstala OpenVPN"
+    echo -e "\tvpn status\tExibe status de conexão da VPN"
+  }
+
+  # Switch methods
+  # ==========================================
+  case $1 in
+    '') default;;
+    daemon) daemon;;
+    exit) exit;;
+    install) install;;
+    status) status;;
+    help|*) help;;
+  esac
+)
