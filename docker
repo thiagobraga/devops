@@ -52,27 +52,16 @@ alias drmi='docker rmi $(docker images -q)'
 # Docker Compose
 # ==========================================
 alias dc='docker-compose'
-alias dcup='docker-compose up'
-alias dcupd='docker-compose up -d'
-alias dcdown='docker-compose down'
-alias dckill='docker-compose kill'
+alias dcb='docker-compose build'
+alias dce='docker-compose exec'
+alias dck='docker-compose kill'
+alias dcl='docker-compose logs'
 alias dcr='docker-compose kill && docker-compose up'
 alias dcrd='docker-compose kill && docker-compose up -d'
-alias dcexec='docker-compose exec'
-alias dclogs='docker-compose logs'
-alias dcbuild='docker-compose build'
+alias dcup='docker-compose up'
+alias dcupd='docker-compose up -d'
+alias dcdn='docker-compose down'
 
-# Laradock
-# ==========================================
-
-# Alias para executar comandos no container "workspace" do Laradock.
-# Facilita a execução de programas como bash, php, composer.
-#
-# Usage:
-#   d php artisan migrate:refresh --weed
-#   d composer install
-#   d bash
-alias d='docker-compose exec --user=laradock workspace'
 
 # Portainer
 # ==========================================
