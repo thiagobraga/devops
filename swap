@@ -9,29 +9,29 @@ swap() {
     free -h | grep Swap
   else
 
-  # Caso não tenha um Swap ativo, ele criará um arquivo
-  # swap.img no /var, vai atribuir permissão de leitura
-  # e escrita apenas para o root.
-  # Vai solicitar ao usuário para que digite a
-  # quantidade em GB para a criação do SwapFile.
-  # Após isso vai preencher com blocos o arquivo
-  # swap.img, vai torná-lo um arquivo de Swap e
-  # ativar o Swap a partir do arquivo.
-  # Por fim, ele adiciona os parametros de Swap no
-  # arquivo /etc/fstab.
+    # Caso não tenha um Swap ativo, ele criará um arquivo
+    # swap.img no /var, vai atribuir permissão de leitura
+    # e escrita apenas para o root.
+    # Vai solicitar ao usuário para que digite a
+    # quantidade em GB para a criação do SwapFile.
+    # Após isso vai preencher com blocos o arquivo
+    # swap.img, vai torná-lo um arquivo de Swap e
+    # ativar o Swap a partir do arquivo.
+    # Por fim, ele adiciona os parametros de Swap no
+    # arquivo /etc/fstab.
 
-  sudo touch /var/swap.img
-  sudo chmod 600 /var/swap.img
+    sudo touch /var/swap.img
+    sudo chmod 600 /var/swap.img
 
-  echo "Qual o tamanho de Swap você necessita em Gigabytes?"
-  read SWAP_SIZE
+    echo "Qual o tamanho de Swap você necessita em Gigabytes?"
+    read SWAP_SIZE
 
-  sudo dd if=/dev/zero of=/var/swap.img bs=$(($SWAP_SIZE*1024))k  count=1000
-  sudo mkswap /var/swap.img
-  sudo swapon /var/swap.img
-  sudo sed -i '$a # SwapFile\n/var/swap.img    none     swap    sw    0    0' /etc/fstab
+    sudo dd if=/dev/zero of=/var/swap.img bs=$(($SWAP_SIZE*1024))k  count=1000
+    sudo mkswap /var/swap.img
+    sudo swapon /var/swap.img
+    sudo sed -i '$a # SwapFile\n/var/swap.img    none     swap    sw    0    0' /etc/fstab
 
-  echo '[DevOps] SwapFile criado e ativado com sucesso!'
-  free -h | grep Swap
+    echo '[DevOps] SwapFile criado e ativado com sucesso!'
+    free -h | grep Swap
   fi
 }
